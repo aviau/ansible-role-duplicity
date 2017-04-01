@@ -1,0 +1,22 @@
+---
+
+duplicity_job_name: JOB_NAME
+
+# AWS
+duplicity_aws_access_key_id: false
+duplicity_aws_secret_access_key: false
+
+# GPG
+duplicity_passphrase: false
+duplicity_sign_key: false
+duplicity_encrypt_key: false
+
+# SRC/DEST
+duplicity_src: false
+duplicity_dest: false
+
+# FULL BACKUP?
+duplicity_full_if_older_than: false
+
+# CLEANUP
+duplicity_remove_all_but_n_full: false

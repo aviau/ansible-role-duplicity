@@ -1,0 +1,97 @@
+---
+
+# Install duplicity in /opt
+- name: install custom duplicity deps
+  apt:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - python
+    - gnupg
+    - python-virtualenv
+    - python-dev
+    - librsync-dev
+
+- name: create duplicity folder
+  file:
+    path: /opt/duplicity
+    state: directory
+    owner: root
+    group: root
+    mode: 0770
+
+- name: download and unpack duplicity
+  unarchive:
+    src: "https://code.launchpad.net/duplicity/0.7-series/0.7.12/+download/duplicity-0.7.12.tar.gz"
+    dest: /opt/duplicity
+    creates: /opt/duplicity/duplicity-0.7.12
+    remote_src: True
+
+- name: create duplicity virtualenv
+  command: virtualenv venv
+  args:
+    creates: /opt/duplicity/venv
+    chdir: /opt/duplicity
+
+- name: install duplicity inside the virtual env
+  command: bash -c "source venv/bin/activate && cd duplicity-* && python setup.py install"
+  args:
+    creates: /opt/duplicity/venv/bin/duplicity
+    chdir: /opt/duplicity
+
+- name: install boto inside the virtual env
+  pip:
+    name: boto
+    state: present
+    virtualenv: /opt/duplicity/venv
+
+- name: install lockfile inside the virtual env
+  pip:
+    name: lockfile
+    state: present
+    virtualenv: /opt/duplicity/venv
+
+#- name: Install duplicity
+#  apt:
+#    name: "{{ item }}"
+#    state: installed
+#  with_items:
+#    - duplicity
+#    - python-boto
+
+# TODO: Ensure keys are present
+
+# Install script
+- name: install backup script
+  template:
+    src: job.sh
+    dest: "/opt/duplicity_job_{{ duplicity_job_name }}.sh"
+    owner: root
+    group: root
+    mode: 0770
+
+# Install systemd timer
+- name: install systemd timer
+  template:
+    src: job.service
+    dest: "/lib/systemd/system/duplicity_job_{{ duplicity_job_name }}.service"
+    owner: root
+    group: root
+    mode: 0644
+
+# Reload systemd
+- name: reload systemd
+  command: systemctl daemon-reload
+
+- name: enable timer
+  service:
+    name: "duplicity_job_{{duplicity_job_name }}"
+    enabled: yes
+
+#- name: enable systemd timer
+#  systemd:
+#    state: started
+#    enabled: yes
+#    daemon_reload: yes
+#    no_block: yes
+#    name: "duplicity_job_{{duplicity_job_name }}"

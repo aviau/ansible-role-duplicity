@@ -1,0 +1,10 @@
+[Unit]
+After=network.target
+
+[Service]
+ExecStart=/opt/duplicity_job_{{ duplicity_job_name }}.sh
+Restart=always
+RestartSec=12h
+
+[Install]
+WantedBy=multi-user.target
