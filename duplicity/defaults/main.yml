@@ -2,6 +2,8 @@
 
 duplicity_job_name: JOB_NAME
 
+duplicity_verbosity_level: false
+
 # AWS
 duplicity_aws_access_key_id: false
 duplicity_aws_secret_access_key: false

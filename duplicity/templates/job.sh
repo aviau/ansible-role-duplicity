@@ -1,8 +1,10 @@
 #!/bin/bash
 # {{ ansible_managed }}
 
-source /opt/duplicity/venv/bin/activate
-DUPLICITY_BIN=/opt/duplicity/venv/bin/duplicity
+set -e
+
+source /opt/duplicity_ansible/venv/bin/activate
+DUPLICITY_BIN=/opt/duplicity_ansible/venv/bin/duplicity
 
 {% if duplicity_aws_access_key_id %}
 # AWS_ACCESS_KEY_ID
@@ -27,7 +29,10 @@ export PASSPHRASE={{ duplicity_passphrase }}
 
 
 # Run the backup
-${DUPLICITY_BIN} -v8\
+${DUPLICITY_BIN} \
+{% if duplicity_verbosity_level %}
+    --verbosity {{ duplicity_verbosity_level }} \
+{% endif %}
 {% if duplicity_sign_key %}
     --sign-key {{ duplicity_sign_key }} \
 {% endif %}

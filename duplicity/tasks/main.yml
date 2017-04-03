@@ -1,6 +1,21 @@
 ---
 
-# Install duplicity in /opt
+###################
+## GENERAL SETUP ##
+###################
+
+- name: create duplicity folder
+  file:
+    path: /opt/duplicity_ansible
+    state: directory
+    owner: root
+    group: root
+    mode: 0770
+
+####################
+## CUSTOM INSTALL ##
+####################
+
 - name: install custom duplicity deps
   apt:
     name: "{{ item }}"
@@ -12,44 +27,42 @@
     - python-dev
     - librsync-dev
 
-- name: create duplicity folder
-  file:
-    path: /opt/duplicity
-    state: directory
-    owner: root
-    group: root
-    mode: 0770
-
 - name: download and unpack duplicity
   unarchive:
     src: "https://code.launchpad.net/duplicity/0.7-series/0.7.12/+download/duplicity-0.7.12.tar.gz"
-    dest: /opt/duplicity
-    creates: /opt/duplicity/duplicity-0.7.12
+    dest: /opt/duplicity_ansible
+    creates: /opt/duplicity_ansible/duplicity-0.7.12
     remote_src: True
+    owner: root
+    group: root
 
 - name: create duplicity virtualenv
   command: virtualenv venv
   args:
-    creates: /opt/duplicity/venv
-    chdir: /opt/duplicity
+    creates: /opt/duplicity_ansible/venv
+    chdir: /opt/duplicity_ansible
 
 - name: install duplicity inside the virtual env
   command: bash -c "source venv/bin/activate && cd duplicity-* && python setup.py install"
   args:
-    creates: /opt/duplicity/venv/bin/duplicity
-    chdir: /opt/duplicity
+    creates: /opt/duplicity_ansible/venv/bin/duplicity
+    chdir: /opt/duplicity_ansible
 
 - name: install boto inside the virtual env
   pip:
     name: boto
     state: present
-    virtualenv: /opt/duplicity/venv
+    virtualenv: /opt/duplicity_ansible/venv
 
 - name: install lockfile inside the virtual env
   pip:
     name: lockfile
     state: present
-    virtualenv: /opt/duplicity/venv
+    virtualenv: /opt/duplicity_ansible/venv
+
+####################
+## SYSTEM INSTALL ##
+####################
 
 #- name: Install duplicity
 #  apt:
@@ -59,13 +72,28 @@
 #    - duplicity
 #    - python-boto
 
-# TODO: Ensure keys are present
+################
+## SETUP JOBS ##
+################
+
+- name: import encrypt key
+  command: "gpg --keyserver keyserver.ubuntu.com --recv-keys {{ duplicity_encrypt_key }}"
+  when: duplicity_encrypt_key != false
+
+# Create jobs folder
+- name: create jobs folder
+  file:
+    path: /opt/duplicity_ansible/jobs
+    state: directory
+    owner: root
+    group: root
+    mode: 0770
 
 # Install script
 - name: install backup script
   template:
     src: job.sh
-    dest: "/opt/duplicity_job_{{ duplicity_job_name }}.sh"
+    dest: "/opt/duplicity_ansible/jobs/duplicity_job_{{ duplicity_job_name }}.sh"
     owner: root
     group: root
     mode: 0770

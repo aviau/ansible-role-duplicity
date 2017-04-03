@@ -2,7 +2,7 @@
 After=network.target
 
 [Service]
-ExecStart=/opt/duplicity_job_{{ duplicity_job_name }}.sh
+ExecStart=/opt/duplicity_ansible/jobs/duplicity_job_{{ duplicity_job_name }}.sh
 Restart=always
 RestartSec=12h
 
